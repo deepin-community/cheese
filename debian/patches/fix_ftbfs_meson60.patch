@@ -1,0 +1,29 @@
+Description: Fix FTBFS with meson 60
+Author: Laurent Bigonville <bigon@debian.org>
+Bug: https://gitlab.gnome.org/GNOME/cheese/-/issues/124
+
+--- a/data/meson.build
++++ b/data/meson.build
+@@ -23,10 +23,9 @@ resource_sources = gnome.compile_resourc
+ desktop = cheese_namespace + '.desktop'
+ 
+ i18n.merge_file(
+-  desktop,
+   type: 'desktop',
+   input: desktop + '.in',
+-  output: '@BASENAME@',
++  output: desktop,
+   po_dir: po_dir,
+   install: true,
+   install_dir: cheese_datadir / 'applications',
+@@ -35,9 +34,8 @@ i18n.merge_file(
+ appdata = cheese_namespace + '.appdata.xml'
+ 
+ i18n.merge_file(
+-  appdata,
+   input: appdata + '.in',
+-  output: '@BASENAME@',
++  output: appdata,
+   po_dir: po_dir,
+   install: true,
+   install_dir: cheese_datadir / 'metainfo',

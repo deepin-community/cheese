@@ -1,0 +1,87 @@
+From: Jeremy Bicha <jbicha@ubuntu.com>
+Date: Mon, 20 Sep 2021 21:02:23 -0400
+Subject: tests: Compile gsettings schemas for use in build tests
+
+Closes: https://bugzilla.gnome.org/show_bug.cgi?id=731009
+
+https://gitlab.gnome.org/GNOME/cheese/-/merge_requests/51
+---
+ data/meson.build  | 14 ++++++++++++++
+ src/meson.build   | 27 +++++++++++++++------------
+ tests/meson.build |  3 +++
+ 3 files changed, 32 insertions(+), 12 deletions(-)
+
+diff --git a/data/meson.build b/data/meson.build
+index 34e669d..57a76b2 100644
+--- a/data/meson.build
++++ b/data/meson.build
+@@ -51,6 +51,20 @@ configure_file(
+   install_dir: dbus_session_bus_services_dir,
+ )
+ 
++copy_gschema = custom_target('copy-gschema-to-builddir',
++  input: cheese_namespace + '.gschema.xml',
++  output: cheese_namespace + 'copied.gschema.xml',
++  command: ['cp', '@INPUT@', '@OUTPUT@']
++)
++compile_schemas = custom_target('glib-compile-schemas',
++  output: 'gschemas.compiled',
++  install: false,
++  command: [find_program('glib-compile-schemas'),
++    meson.current_build_dir()
++  ],
++  depends: [copy_gschema]
++)
++
+ install_data(
+   cheese_namespace + '.gschema.xml',
+   install_dir: gio_schemasdir,
+diff --git a/src/meson.build b/src/meson.build
+index 74f62b1..cf96950 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -1,15 +1,18 @@
+-sources = files(
+-  'cheese-application.vala',
+-  'cheese-countdown.vala',
+-  'cheese-effects-manager.vala',
+-  'cheese-main.vala',
+-  'cheese-preferences.vala',
+-  'cheese-window.vala',
+-  'thumbview/cheese-thumbnail.c',
+-  'thumbview/cheese-thumb-view.c',
+-  'thumbview/eog-thumb-nav.c',
+-  'vapi/libcanberra-gtk3.vapi'
+-)
++sources = [
++  files(
++    'cheese-application.vala',
++    'cheese-countdown.vala',
++    'cheese-effects-manager.vala',
++    'cheese-main.vala',
++    'cheese-preferences.vala',
++    'cheese-window.vala',
++    'thumbview/cheese-thumbnail.c',
++    'thumbview/cheese-thumb-view.c',
++    'thumbview/eog-thumb-nav.c',
++    'vapi/libcanberra-gtk3.vapi'
++  ),
++  compile_schemas
++]
+ 
+ deps = [
+   cheese_common_dep,
+diff --git a/tests/meson.build b/tests/meson.build
+index d716747..024da8d 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -20,6 +20,9 @@ random_number = cheese_minor_version + meson.version().split('.').get(1).to_int(
+ test_env = environment()
+ test_env.set('G_TEST_SRCDIR', meson.current_source_dir())
+ test_env.set('G_TEST_BUILDDIR', meson.current_build_dir())
++test_env.set('GSETTINGS_SCHEMA_DIR', join_paths(meson.build_root(), 'data'))
++test_env.set('GSETTINGS_BACKEND', 'memory')
++
+ test_env.set('G_DEBUG', 'gc-friendly')
+ test_env.set('MALLOC_CHECK_', '2')
+ test_env.set('MALLOC_PERTURB_', '@0@'.format(random_number % 256))

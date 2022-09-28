@@ -1,0 +1,34 @@
+#!/usr/bin/make -f
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,-O1 -Wl,-z,defs
+export DPKG_GENSYMBOLS_CHECK_LEVEL = 4
+
+# Filter out that flag for Ubuntu, it's default there but fails the build
+export DEB_LDFLAGS_MAINT_STRIP = -Wl,-Bsymbolic-functions
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- -Dtests=true
+
+override_dh_auto_test:
+	NO_AT_BRIDGE=1 dbus-run-session -- xvfb-run --auto-servernum dh_auto_test
+
+# The camerabin plugin is in gstreamer1.0-plugins-good (and the headers in
+# libgstreamer-plugins-godd1.0-dev) in Ubuntu
+override_dh_gencontrol:
+ifneq (yes,$(shell dpkg-vendor --derives-from Ubuntu && echo yes))
+	# not Ubuntu
+	dh_gencontrol -- \
+		-Vgstbad:Depends='gstreamer1.0-plugins-bad (>= 1.4)' \
+		-Vgstbad-dev:Depends='libgstreamer-plugins-bad1.0-dev (>= 1.4)'
+else
+	# Ubuntu or derivatives
+	dh_gencontrol -- -Vgstbad-dev:Depends='libgstreamer-plugins-good1.0-dev (>= 1.4)'
+
+execute_after_dh_install:
+	sed -i 's/gstreamer-plugins-bad-1.0/gstreamer-plugins-good-1.0/' \
+		debian/libcheese-dev/usr/lib/*/pkgconfig/cheese.pc
+endif # Ubuntu & derivatives

@@ -1,0 +1,23 @@
+From: David King <amigadave@amigadave.com>
+Date: Mon, 20 Sep 2021 08:26:54 +0100
+Subject: introspection: Pin the API version for now
+
+(cherry picked from commit 6cba16a610adf7eddd17113d283b3a989e26328c)
+---
+ meson.build | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/meson.build b/meson.build
+index 82f663f..79c6cf9 100644
+--- a/meson.build
++++ b/meson.build
+@@ -13,7 +13,8 @@ version_array = cheese_version.split('.')
+ cheese_major_version = version_array[0].to_int()
+ cheese_minor_version = version_array[1].to_int()
+ 
+-cheese_api_version = cheese_major_version.to_string() + '.0'
++#cheese_api_version = cheese_major_version.to_string() + '.0'
++cheese_api_version = 3.0
+ 
+ cheese_prefix = get_option('prefix')
+ cheese_bindir = get_option('bindir')

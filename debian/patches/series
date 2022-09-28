@@ -1,0 +1,4 @@
+introspection-Pin-the-API-version-for-now.patch
+Fix-the-API-version.patch
+tests-Compile-gsettings-schemas-for-use-in-build-tests.patch
+fix_ftbfs_meson60.patch

@@ -1,0 +1,40 @@
+#!/bin/sh
+# autopkgtest check: Build and run a program against cheese, to verify that
+# the headers and pkg-config file are installed correctly
+# (C) 2012 Canonical Ltd.
+# (C) 2018-2019 Simon McVittie
+# Authors: Martin Pitt, Simon McVittie
+
+set -eux
+
+WORKDIR=$(mktemp -d)
+export XDG_RUNTIME_DIR="$WORKDIR"
+cleanup () {
+    rm -fr "$WORKDIR"
+}
+trap cleanup 0 INT QUIT ABRT PIPE TERM
+cd "$WORKDIR"
+
+if [ -n "${DEB_HOST_GNU_TYPE:-}" ]; then
+    CROSS_COMPILE="$DEB_HOST_GNU_TYPE-"
+else
+    CROSS_COMPILE=
+fi
+
+cat <<EOF > cheese.c
+#include <cheese-camera-device-monitor.h>
+
+int main(void)
+{
+    g_assert_cmpuint (CHEESE_TYPE_CAMERA_DEVICE_MONITOR, !=, G_TYPE_INVALID);
+    return 0;
+}
+EOF
+
+# Deliberately word-splitting, that's how pkg-config works:
+# shellcheck disable=SC2046
+"${CROSS_COMPILE}gcc" -o cheese-test cheese.c $("${CROSS_COMPILE}pkg-config" --cflags --libs cheese)
+echo "build: OK"
+[ -x cheese-test ]
+dbus-run-session -- xvfb-run -a ./cheese-test
+echo "run: OK"
